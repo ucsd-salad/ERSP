@@ -12,7 +12,6 @@ Works on CPU or GPU automatically.
 from transformers import pipeline
 import torch
 
-
 def load_model(model_name="TinyLlama/TinyLlama-1.1B-Chat-v1.0"):
     """
     Load a text generation pipeline.
@@ -45,7 +44,6 @@ def load_model(model_name="TinyLlama/TinyLlama-1.1B-Chat-v1.0"):
     )
 
     return generator
-
 
 def generate_response(generator, prompt):
     """
@@ -88,7 +86,6 @@ def generate_response(generator, prompt):
 
     return response_text
 
-
 def main():
     """
     Main script execution.
@@ -107,6 +104,13 @@ def main():
 
     print("----- MODEL RESPONSE -----\n")
     print(response)
+
+    # the relevant Alloy plan will be injected into the prompt via a tool call (i.e. the LLM will call a tool that retrieves the Alloy plan from the database and injects it into the prompt)
+    # The model will generate a response that is the Alloy candidate plan
+    # We need to port Alloy to Python, i.e. be able to feed the model's Alloy candidate plan response from our Python program, into our Alloy model-checking code, to verify the plan's safety and correctness
+    # Then, if the plan doesn't verify, I think we we should do a few-shot prompting approach where we feed the model a few examples of plans it generated that failed verification, along with the Alloy counterexamples that explain why they failed, to help the model learn to generate plans that are more likely to verify successfully
+    # basically this is a loop where we generate a candidate plan, verify it, and if it fails verification, we feed the model the failed plan and the counterexample, and ask it to generate a new candidate plan, and we repeat until we get a plan that verifies successfully
+    # Then, we ask the model to translate the Alloy plan to English and have the human review it
 
 
 if __name__ == "__main__":
