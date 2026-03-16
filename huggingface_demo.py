@@ -86,6 +86,49 @@ def generate_response(generator, prompt):
 
     return response_text
 
+def run_alloy(alloy_code):
+    """
+    Johnathan's part 
+    Runs the given Alloy code and returns (success, output).
+ 
+    success: true if alloy ran without errors, false otherwise 
+    output: the raw output/error string from Alloy.
+    """
+    pass
+
+# Aila's implementation of syntax verifier loop 
+def repair_loop(generator, alloy_code, max_attempts=5):
+    """
+    Given an initial piece of Alloy code, validate it and ask the LLM
+    to fix it if there are errors. Repeat until valid or max_attempts reached.
+    """
+    attempts = 0
+
+    while attempts < max_attempts:
+        attempts += 1
+        #run the given alloy code and catch the output 
+        success, output = run_alloy(alloy_code)
+
+        #if success = true, no error. loop ends and return the code. 
+        if success:
+            print("Alloy code is compilabel.")
+            return True, alloy_code
+
+        prompt = (
+            f"The following Alloy code has an error:\n\n"
+            f"{alloy_code}\n\n"
+            f"The error message is:\n\n"
+            f"{output}\n\n"
+            f"Only change based on the error and return the corrected Alloy code. No extra comments"
+        )
+
+        alloy_code = generate_response(generator, prompt)
+
+    print(f"Failed after {max_attempts} attempts.")
+    return False, alloy_code
+
+ 
+
 def main():
     """
     Main script execution.
