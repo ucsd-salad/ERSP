@@ -9,7 +9,7 @@ This script:
 
 from anthropic import Anthropic
 
-client = Anthropic(api_key="<YOUR_API_KEY>")
+client = Anthropic()
 
 def call_claude(prompt, max_new_tokens=200, temperature=0.7):
     message = client.messages.create(
