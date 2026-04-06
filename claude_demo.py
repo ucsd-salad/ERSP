@@ -10,6 +10,7 @@ This script:
 from anthropic import Anthropic
 from dotenv import load_dotenv
 import os
+import subprocess
 
 load_dotenv()
 
@@ -56,7 +57,12 @@ def generate_response(prompt, temperature=0.7):
 
     return response_text.strip()
 
-def run_alloy(alloy_code):
+def save_alloy_to_file(alloy_code, output_path="generated_model.als"):
+    with open(output_path, "w") as f:
+        f.write(alloy_code)
+    return output_path
+
+def run_alloy(alloy_code_path):
     """
     Johnathan's part 
     Runs the given Alloy code and returns (success, output).
@@ -64,10 +70,20 @@ def run_alloy(alloy_code):
     success: true if alloy ran without errors, false otherwise 
     output: the raw output/error string from Alloy.
     """
-    pass
+    result = subprocess.run(
+        ["java", "-jar", "AlloyCommandline.jar", alloy_code_path],
+        capture_output=True,
+        text=True
+    )
+
+    success = result.returncode == 0 and not result.stderr.strip()
+    output = result.stderr.strip() if not success else None
+
+    return success, output
+
 
 # Aila's implementation of syntax verifier loop 
-def repair_loop(generator, alloy_code, max_attempts=5):
+def repair_loop(alloy_code_path, max_attempts=5):
     """
     Given an initial piece of Alloy code, validate it and ask the LLM
     to fix it if there are errors. Repeat until valid or max_attempts reached.
@@ -77,16 +93,16 @@ def repair_loop(generator, alloy_code, max_attempts=5):
     while attempts < max_attempts:
         attempts += 1
         #run the given alloy code and catch the output 
-        success, output = run_alloy(alloy_code)
+        success, output = run_alloy(alloy_code_path)
 
         #if success = true, no error. loop ends and return the code. 
         if success:
             print("Alloy code is compilable.")
-            return True, alloy_code
+            return True, output
 
         prompt = (
             f"You are an expert Alloy repair assistant. The following Alloy code has an error:\n\n"
-            f"{alloy_code}\n\n"
+            f"{alloy_code_path}\n\n"
             f"The error message is:\n\n"
             f"{output}\n\n"
             f"Only make changes based on the error. Return ONLY valid Alloy code. No explanations."
@@ -95,9 +111,10 @@ def repair_loop(generator, alloy_code, max_attempts=5):
         # set temperature to 0 for deterministic output
         # otherwise, we might get different "repairs" each time we run the loop, which could make it harder to converge on a working solution
         alloy_code = generate_response(prompt, temperature=0) 
+        alloy_code_path = save_alloy_to_file(alloy_code, output_path="candidate_plan.als")
 
-    print(f"Failed after {max_attempts} attempts.")
-    return False, alloy_code
+    print("Failed after {max_attempts} attempts.")
+    return False, "candidate_plan.als"
 
  
 
@@ -107,14 +124,28 @@ def main():
     """
 
     # Example prompt
-    prompt = "Generate a plan for how to acutely treat a broken bone"
+    # prompt = "Generate a plan for how to acutely treat a broken bone"
 
-    print("\nSending prompt to Claude...\n")
+    # print("\nSending prompt to Claude...\n")
 
-    response = generate_response(prompt)
+    # response = generate_response(prompt)
 
-    print("----- MODEL RESPONSE -----\n")
-    print(response)
+
+    # implementing the loop 
+    # 1) save the response to .als file 
+    # alloy_path = save_alloy_to_file(response, output_path="candidate_plan.als")
+    # 2) pass path to loop verifier 
+    result_bool, alloy_code_path = repair_loop('reference.als')
+
+    # print("----- MODEL RESPONSE -----\n")
+    # print('response')
+
+    print("---the generated plan was compilable? ")
+    print(result_bool)
+
+    print("---the generated plan is stored in ")
+    print(alloy_code_path)
+
 
     # the relevant Alloy plan will be injected into the prompt via a tool call (i.e. the LLM will call a tool that retrieves the Alloy plan from the database and injects it into the prompt)
     # The model will generate a response that is the Alloy candidate plan
