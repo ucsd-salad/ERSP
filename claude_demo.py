@@ -12,6 +12,9 @@ from dotenv import load_dotenv
 import os
 import subprocess
 
+BASE = os.path.dirname(os.path.abspath(__file__))
+classpath = f"{BASE}/AlloyCommandline:{BASE}/AlloyCommandline/alloy4.2.jar"
+
 load_dotenv()
 
 client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
@@ -63,21 +66,22 @@ def save_alloy_to_file(alloy_code, output_path="generated_model.als"):
     return output_path
 
 def run_alloy(alloy_code_path):
-    """
-    Johnathan's part 
-    Runs the given Alloy code and returns (success, output).
- 
-    success: true if alloy ran without errors, false otherwise 
-    output: the raw output/error string from Alloy.
-    """
+    print(f"Running Alloy code from {alloy_code_path}...")
+
     result = subprocess.run(
-        ["java", "-jar", "AlloyCommandline.jar", alloy_code_path],
+        [
+            "java",
+            "-cp",
+            classpath,
+            "AlloyCommandline",
+            alloy_code_path
+        ],
         capture_output=True,
         text=True
     )
 
-    success = result.returncode == 0 and not result.stderr.strip()
-    output = result.stderr.strip() if not success else None
+    success = result.returncode == 0
+    output = result.stdout + result.stderr
 
     return success, output
 
@@ -89,8 +93,10 @@ def repair_loop(alloy_code_path, max_attempts=5):
     to fix it if there are errors. Repeat until valid or max_attempts reached.
     """
     attempts = 0
+    output_path = "candidate_plan.als"
 
     while attempts < max_attempts:
+        print(f"Attempt {attempts + 1} of {max_attempts}...")
         attempts += 1
         #run the given alloy code and catch the output 
         success, output = run_alloy(alloy_code_path)
@@ -98,7 +104,7 @@ def repair_loop(alloy_code_path, max_attempts=5):
         #if success = true, no error. loop ends and return the code. 
         if success:
             print("Alloy code is compilable.")
-            return True, output
+            return True, alloy_code_path, output
 
         prompt = (
             f"You are an expert Alloy repair assistant. The following Alloy code has an error:\n\n"
@@ -111,10 +117,10 @@ def repair_loop(alloy_code_path, max_attempts=5):
         # set temperature to 0 for deterministic output
         # otherwise, we might get different "repairs" each time we run the loop, which could make it harder to converge on a working solution
         alloy_code = generate_response(prompt, temperature=0) 
-        alloy_code_path = save_alloy_to_file(alloy_code, output_path="candidate_plan.als")
+        alloy_code_path = save_alloy_to_file(alloy_code, output_path=output_path)
 
     print("Failed after {max_attempts} attempts.")
-    return False, "candidate_plan.als"
+    return False, output_path, output
 
  
 
@@ -135,7 +141,7 @@ def main():
     # 1) save the response to .als file 
     # alloy_path = save_alloy_to_file(response, output_path="candidate_plan.als")
     # 2) pass path to loop verifier 
-    result_bool, alloy_code_path = repair_loop('reference.als')
+    result_bool, alloy_code_path, output_logs = repair_loop('Alloy_Verifier/reference.als')
 
     # print("----- MODEL RESPONSE -----\n")
     # print('response')
@@ -146,6 +152,8 @@ def main():
     print("---the generated plan is stored in ")
     print(alloy_code_path)
 
+    print("---output logs ---")
+    print(output_logs)
 
     # the relevant Alloy plan will be injected into the prompt via a tool call (i.e. the LLM will call a tool that retrieves the Alloy plan from the database and injects it into the prompt)
     # The model will generate a response that is the Alloy candidate plan
