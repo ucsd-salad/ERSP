@@ -7,6 +7,8 @@ This script:
 3. Contains a main function that demonstrates how to use the above functions.
 """
 
+# have to run git submodule update --init --recursive first 
+
 from anthropic import Anthropic
 from dotenv import load_dotenv
 import os
@@ -119,7 +121,6 @@ def run_alloy(alloy_code_path):
         capture_output=True,
         text=True
     )
-
     output = result.stdout + result.stderr
 
     # --- catch outputs of the terminal ---
@@ -129,7 +130,16 @@ def run_alloy(alloy_code_path):
         and "File cannot be found" not in output
     )
 
-    return success, output
+    if result.returncode != 0:
+        status = "ERROR"
+    elif "Syntax error" in output:
+        status = "SYNTAX ERROR"
+    elif "No instance" in output or "Inconsistent" in output:
+        status = "UNSAT"
+    else:
+        status = "SAT"
+
+    return success, output, status
 
 
 # Aila's implementation of syntax verifier loop 
@@ -145,13 +155,16 @@ def repair_syntax_loop(alloy_code_path, max_attempts=5):
         print(f"Attempt {attempts + 1} of {max_attempts}...")
         attempts += 1
         #run the given alloy code and catch the output 
-        success, output_logs = run_alloy(alloy_code_path)
+        success, output_logs, output_status = run_alloy(alloy_code_path)
         print("Alloy output logs:")
         print(output_logs)
+        
 
         #if success = true, no error. loop ends and return the code. 
         if success:
             print("Alloy code is compilable.")
+            print("Alloy status:")
+            print(output_status)
             return True, alloy_code_path, output_logs
 
         # read the Alloy file
@@ -208,11 +221,22 @@ def main():
     print(output_logs)
 
     # 3) if the code is compilable, then run check.als
-    final_result, final_log = run_alloy('Alloy_Verifier/check.als')
-    if final_result: 
-        print("Generated plan is safe")
-    else: 
-        print("Generated plan is NOT safe")
+    final_result, final_log, final_status = run_alloy('Alloy_Verifier/check.als')
+    if final_result:
+        print("Check ran successfully")
+
+        if final_status == "SAT":
+            print("Generated plan is SAFE (a valid instance exists)")
+
+        elif final_status == "UNSAT":
+            print("Generated plan is NOT safe (no valid instance found)")
+
+        else:  # ERROR or unexpected case
+            print("Check completed but returned an error state")
+            print(final_log)
+
+    else:
+        print("Alloy execution failed")
         print(final_log)
 
 
