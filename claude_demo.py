@@ -193,10 +193,7 @@ def main():
     # 1) save the response to .als file 
     # alloy_path = save_alloy_to_file(response, output_path="Alloy_Verifier/generated.als")
     # 2) pass path to loop verifier 
-    result_bool, alloy_code_path, output_logs = repair_loop('Alloy_Verifier/reference.als')
-
-    # print("----- MODEL RESPONSE -----\n")
-    # print('response')
+    result_bool, alloy_code_path, output_logs = repair_loop('Alloy_Verifier/generated.als')
 
     print("---the generated plan was compilable? ")
     print(result_bool)
