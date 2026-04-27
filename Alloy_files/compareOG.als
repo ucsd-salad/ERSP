@@ -123,7 +123,7 @@ one sig NextSteps {
     actions: set Action
 }
 
--- NEW: wrapper predicate
+-- 🔴 NEW: wrapper predicate
 pred ReferenceConstraints {
     MovementStateConsistency
     Dependencies
@@ -133,18 +133,18 @@ pred ReferenceConstraints {
 
 pred GeneratedPlan {
 
-    -- Actions that have been done
-    P.done = 
+    -- We have asked for symptoms and called 911
+    P.done = AskForSymptoms
 
-    -- Symptoms defined by the user
-    P.symptoms = 
+    -- Symptoms consistent with possible spine injury
+    P.symptoms = VertebralPain
 
-    -- Movement state 
-    P.states = 
+    -- Movement state still unknown
+    P.states = none
 
-    -- Next step from the original plan: 
-    -- Closest matching Action in the reference model:
-    some a: Action | NextActionToDo[a] and a = 
+    -- Next step from the original plan: Do NOT move the person.
+    -- Closest matching Action in the reference model: ProtectHeadAndSpine
+    some a: Action | NextActionToDo[a] and a = AskForInfo
 }
 
 

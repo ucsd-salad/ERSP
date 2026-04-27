@@ -1,5 +1,3 @@
-module checking
-
 -- ----------------- SYMPTOMS -----------------
 
 abstract sig Symptom {}
@@ -18,8 +16,7 @@ abstract sig MovementState extends PatState {}
 one sig CanMoveSpine extends MovementState {}
 one sig CannotMoveSpine extends MovementState {}
 
--- was fact → now predicate
-pred MovementStateConsistency {
+fact MovementStateConsistency {
     all p: PatientStatus |
         SpineInjurySuspected in p.states implies
             lone (p.states & MovementState)
@@ -28,15 +25,21 @@ pred MovementStateConsistency {
 ----------------- ACTION DEFS -----------------
 
 abstract sig Action {}
+-- Main flow actions
 one sig ProtectHeadAndSpine extends Action {}
 one sig CheckCSM_Initial extends Action {}
 one sig BeamLiftOrLogRoll extends Action {}
 one sig MaintainHeadStabilization extends Action {}
 one sig CheckCSM_Recheck extends Action {}
 one sig Evacuate extends Action {}
+----if patient cannot move spine-----
 one sig Immobilize extends Action {}
+----more info needed-----------
 one sig AskForInfo extends Action {}
+----not a spine injury--------
 one sig AskForSymptoms extends Action {}
+
+
 
 -- CSM sub-actions
 abstract sig CSM_Step extends Action {}
@@ -52,8 +55,7 @@ sig Dependency {
     requires: set Action
 }
 
--- was fact → now predicate
-pred Dependencies {
+fact Dependencies {
     some d: Dependency | d.state = ProtectHeadAndSpine
     some d: Dependency | d.state = CheckCSM_Initial and d.requires = ProtectHeadAndSpine
     some d: Dependency | d.state = CirculatoryCheck and d.requires = CheckCSM_Initial
@@ -75,16 +77,18 @@ sig PatientStatus {
 
 one sig P extends PatientStatus {}
 
--- was fact → now predicate
-pred NoContradictoryStates {
+-----Deciding if it is a spine injury----------
+fact NoContradictoryStates {
     all p: PatientStatus |
         not (SpineInjurySuspected in p.states and NoSpineInjury in p.states)
 }
 
 -- ----------------- NEXT ACTION PREDICATE -----------------
 
+
 pred NextActionToDo[a: Action] {
 
+    -- CASE 1: No symptoms → do not treat for spine
     ( no P.symptoms
       and a = AskForSymptoms
       and a not in P.done
@@ -92,6 +96,7 @@ pred NextActionToDo[a: Action] {
 
     or
 
+    -- CASE 2: Symptoms present + movement UNKNOWN
     ( some P.symptoms
       and no (P.states & MovementState)
       and a = AskForInfo
@@ -100,6 +105,7 @@ pred NextActionToDo[a: Action] {
 
     or
 
+    -- CASE 3: Symptoms present + cannot move → immobilize
     ( some P.symptoms
       and CannotMoveSpine in P.states
       and a = Immobilize
@@ -108,47 +114,38 @@ pred NextActionToDo[a: Action] {
 
     or
 
-    ( some P.symptoms
-      and CanMoveSpine in P.states
-      and a not in P.done
-      and a not in (Immobilize + AskForInfo + AskForSymptoms)
-      and some d: Dependency |
+   -- CASE 4: Symptoms present + can move → normal dependency workflow
+  ( some P.symptoms
+    and CanMoveSpine in P.states
+    and a not in P.done
+    and a not in (Immobilize + AskForInfo + AskForSymptoms)
+    and some d: Dependency |
          d.state = a
          and d.requires in P.done
     )
 }
+
 
 -- Next actions set
 one sig NextSteps {
     actions: set Action
 }
 
--- NEW: wrapper predicate
-pred ReferenceConstraints {
-    MovementStateConsistency
-    Dependencies
-    NoContradictoryStates
+
+-- Example scenario:
+-- Patient has head/spine protected and motor check passed (change/add to this 
+-- to see how NextActionToDo changes.
+-- remove P.symptoms and the evaluator says it is notSpineInjury
+-- run { a: Action | NextActionToDo[a] } 
+
+fact PatientScenario {
+    P.done =none
+    P.symptoms = none
+    P.states = CanMoveSpine
 }
 
+-- ----------------- QUERY -----------------
 
-pred GeneratedPlan {
-
-    -- Actions that have been done
-    P.done = 
-
-    -- Symptoms defined by the user
-    P.symptoms = 
-
-    -- Movement state 
-    P.states = 
-
-    -- Next step from the original plan: 
-    -- Closest matching Action in the reference model:
-    some a: Action | NextActionToDo[a] and a = 
-}
-
-
-run {
-    GeneratedPlan
-    and not ReferenceConstraints
-} for 10 Action, 10 Dependency, 1 PatientStatus
+-- Find all next required actions based on dependencies
+run { some a: Action | NextActionToDo[a] } for 
+    10 Action, 10 Dependency, 1 PatientStatus

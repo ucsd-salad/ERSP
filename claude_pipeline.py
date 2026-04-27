@@ -15,6 +15,11 @@ import os
 import subprocess
 
 BASE = os.path.dirname(os.path.abspath(__file__))
+JAVA_DIR = os.path.join(BASE, "AlloyCommandline")
+JAR = os.path.join(JAVA_DIR, "alloy4.2.jar")
+JAVA_FILE = os.path.join(JAVA_DIR, "AlloyCommandline.java")
+CLASS_FILE = os.path.join(JAVA_DIR, "AlloyCommandline.class")
+BASE = os.path.dirname(os.path.abspath(__file__))
 classpath = f"{BASE}/AlloyCommandline:{BASE}/AlloyCommandline/alloy4.2.jar"
 
 load_dotenv()
@@ -31,7 +36,6 @@ def call_claude(prompt, max_new_tokens=4000, temperature=0.7):
         ],
     )
     return message.content[0].text
-
 
 def generate_response(prompt, temperature=0.7):
     """
@@ -62,22 +66,22 @@ def generate_response(prompt, temperature=0.7):
 
     return response_text.strip()
 
+"""
+Helper function to save generated Alloy code to a .als file.
+"""
 def save_alloy_to_file(alloy_code, output_path="generated_model.als"):
     with open(output_path, "w") as f:
         f.write(alloy_code)
     return output_path
 
-import os
-import subprocess
-
-BASE = os.path.dirname(os.path.abspath(__file__))
-JAVA_DIR = os.path.join(BASE, "AlloyCommandline")
-
-JAR = os.path.join(JAVA_DIR, "alloy4.2.jar")
-JAVA_FILE = os.path.join(JAVA_DIR, "AlloyCommandline.java")
-CLASS_FILE = os.path.join(JAVA_DIR, "AlloyCommandline.class")
-
-
+"""
+Helper function that runs an Alloy .als file using the CLI and captures the output. 
+Compiles the Java code if needed. 
+Returns a tuple of (success, output_logs, status) where:
+- success: boolean indicating whether the Alloy code ran without errors
+- output_logs: the combined stdout and stderr from running the Alloy code
+- status: a string indicating the result of the Alloy run 
+"""
 def run_alloy(alloy_code_path):
     print(f"Running Alloy code from {alloy_code_path}...")
 
@@ -151,7 +155,9 @@ def run_alloy(alloy_code_path):
     return success, output, status
 
 
-# Aila's implementation of syntax verifier loop 
+"""
+Helper function that implements a loop to repair syntax errors in the generated Alloy code.
+"""
 def repair_syntax_loop(alloy_code_path, max_attempts=5):
     """
     Given an initial piece of Alloy code, validate it and ask the LLM
@@ -196,6 +202,14 @@ def repair_syntax_loop(alloy_code_path, max_attempts=5):
     print("Failed after {max_attempts} attempts.")
     return False, output_path, output_logs
 
+"""
+Helper function that implements a loop to repair logical errors in the generated 
+Alloy code, based on the output of the compare.als verification.
+Returns a tuple of (success, output_path, output_logs) where:
+- success: boolean indicating whether the logical repair was successful (i.e., no counterexample found) 
+- output_path: the path to the final Alloy code (either repaired or last attempted)
+- output_logs: the logs from the last Alloy run
+"""
 def repair_logic_loop(alloy_code_path, max_attempts=5):
     """
     Similar to the syntax repair loop, but focused on logical errors (e.g., not consistent with specification)
@@ -231,6 +245,7 @@ def repair_logic_loop(alloy_code_path, max_attempts=5):
 
         IMPORTANT RULE:
         - You are ONLY allowed to modify the predicate: GeneratedPlan {{ ... }}
+        - Use only variable names already defined outside of the GeneratedPlan predicate. Do NOT introduce any new variables or signatures.
         - You must NOT modify:
             - ReferenceConstraints
             - run statements
@@ -273,9 +288,9 @@ def main():
 
     # implementing the loop 
     # 1) save the response to .als file 
-    # alloy_path = save_alloy_to_file(response, output_path="Alloy_Verifier/generated.als")
+    # alloy_path = save_alloy_to_file(response, output_path="Alloy_Verifier/compare.als")
     # 2) pass path to loop verifier 
-    result_bool, alloy_code_path, output_logs = repair_syntax_loop('Alloy_Verifier/generated.als')
+    result_bool, alloy_code_path, output_logs = repair_syntax_loop('Alloy_Verifier/compare.als')
 
     # print("----- MODEL RESPONSE -----\n")
     # print('response')
