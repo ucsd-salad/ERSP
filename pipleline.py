@@ -87,6 +87,9 @@ def run_alloy(file_path):
     if "Instance found" in output:
         return True, output, "UNSAFE"
 
+    if "Consistent" in output:
+        return True, output, "CONSTISTENT"
+
     return False, output, "UNKNOWN"
 
 # the compare.als file is safe when the output contains "No instance found",
@@ -131,8 +134,8 @@ Error:
 {logs}
 """
 
-        new_plan = call_claude(prompt, temperature=0)
-
+        generated_plan = call_claude(prompt, temperature=0)
+        new_plan = extract_generated_plan(generated_plan)
         updated = replace_generated_plan(code, new_plan)
         save_file(updated, COMPARE_PATH)
 
@@ -190,8 +193,8 @@ Alloy output:
 {logs}
 """
 
-        new_plan = call_claude(prompt, temperature=0)
-
+        generated_plan = call_claude(prompt, temperature=0)
+        new_plan = extract_generated_plan(generated_plan)
         updated = replace_generated_plan(code, new_plan)
         save_file(updated, COMPARE_PATH)
 
@@ -211,7 +214,9 @@ You are generating an Alloy predicate.
 You MUST follow these rules strictly:
 
 RULES:
-- Output ONLY: pred GeneratedPlan {{ ... }}
+- Output ONLY: pred GeneratedPlan "{" ... "}"
+- start with the keyword "pred GeneratedPlan" "{" followed by the body of the predicate, and end with a closing "}"
+- Only change the code to FILL IN THE BLANKS in the GeneratedPlan predicate.
 - Do NOT include any other code
 - Use ONLY variables, signatures, and fields already defined in the file below
 - Do NOT invent new names
@@ -236,7 +241,8 @@ def generate_and_verify(user_prompt, rounds=1):
         print(f"\n == Pipleline round {i+1} ==")
 
         # generate plan
-        new_plan = generate_plan(user_prompt)
+        generated_response = generate_plan(user_prompt)
+        new_plan = extract_generated_plan(generated_response)
 
         with open(COMPARE_PATH, "r") as f:
             base_code = f.read()

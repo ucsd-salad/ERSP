@@ -130,21 +130,17 @@ pred ReferenceConstraints {
     NoContradictoryStates
 }
 
-
 pred GeneratedPlan {
 
-    -- Actions that have been done
-    P.done = 
+    P.done = ProtectHeadAndSpine + CheckCSM_Initial + CirculatoryCheck + SensationCheck + MotorCheck + StrokeGripCheck
 
-    -- Symptoms defined by the user
-    P.symptoms = 
+    P.symptoms = VertebralPain + SensoryChange + WeaknessOrParalysis
 
-    -- Movement state 
-    P.states = 
+    P.states = SpineInjurySuspected + CanMoveSpine
 
-    -- Next step from the original plan: 
-    -- Closest matching Action in the reference model:
-    some a: Action | NextActionToDo[a] and a = 
+    some a: Action | NextActionToDo[a] and a = BeamLiftOrLogRoll
+
+    ReferenceConstraints
 }
 
 

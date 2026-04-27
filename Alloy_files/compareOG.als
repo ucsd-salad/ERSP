@@ -133,18 +133,18 @@ pred ReferenceConstraints {
 
 pred GeneratedPlan {
 
-    -- We have asked for symptoms and called 911
-    P.done = AskForSymptoms
+    -- Actions that have been done
+    P.done = 
 
-    -- Symptoms consistent with possible spine injury
-    P.symptoms = VertebralPain
+    -- Symptoms defined by the user
+    P.symptoms = 
 
-    -- Movement state still unknown
-    P.states = none
+    -- Movement state 
+    P.states = 
 
-    -- Next step from the original plan: Do NOT move the person.
-    -- Closest matching Action in the reference model: ProtectHeadAndSpine
-    some a: Action | NextActionToDo[a] and a = AskForInfo
+    -- Next step from the original plan: 
+    -- Closest matching Action in the reference model:
+    some a: Action | NextActionToDo[a] and a = 
 }
 
 
