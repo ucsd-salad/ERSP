@@ -9,6 +9,21 @@ import re
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Set, Tuple
 
+from anthropic import Anthropic
+
+
+client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+
+def call_claude(prompt: str, max_new_tokens: int = 4000, temperature: float = 0) -> str:
+    message = client.messages.create(
+        model="claude-opus-4-6",
+        max_tokens=max_new_tokens,
+        temperature=temperature,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return message.content[0].text
+
 
 @dataclass
 #each sliced block should be defined as the following:
@@ -251,9 +266,23 @@ if __name__ == "__main__":
                 
             elif cmd_lower.startswith("reject"):
                 feedback = cmd[6:].strip(" :")
-                print(f"Rejected. Feedback: '{feedback}'")
-                print("Placeholder: call LLM for repair the block.\n")
-                break 
+                prompt = f""" You are repairing one Alloy snippet. RULES:
+                        - Output ONLY the full snippet below.
+                        - Preserve the header and context exactly.
+                        - Modify ONLY the target block at the bottom.
+                        - Do not include explanations.
+
+                        Current snippet:
+                        {current_snippet}
+
+                        User feedback:
+                        {feedback}
+                        """
+                current_snippet = call_claude(prompt, temperature=0)
+                print("Repaired snippet:\n")
+                print(current_snippet)
+                print("=" * 70)
+                continue
                 
             elif cmd_lower == "stop":
                 print("Stop received. Exiting.")
