@@ -123,24 +123,31 @@ one sig NextSteps {
     actions: set Action
 }
 
--- NEW: wrapper predicate
+-- wrapper predicate
 pred ReferenceConstraints {
     MovementStateConsistency
     Dependencies
     NoContradictoryStates
 }
 
+
 pred GeneratedPlan {
-
-    P.done = ProtectHeadAndSpine + CheckCSM_Initial + CirculatoryCheck + SensationCheck + MotorCheck + StrokeGripCheck
-
-    P.symptoms = VertebralPain + SensoryChange + WeaknessOrParalysis
-
-    P.states = SpineInjurySuspected + CanMoveSpine
-
-    some a: Action | NextActionToDo[a] and a = BeamLiftOrLogRoll
-
     ReferenceConstraints
+
+    -- Encode the scenario: patient has vertebral pain, cannot move spine, spine injury suspected
+    VertebralPain in P.symptoms
+    CannotMoveSpine in P.states
+    SpineInjurySuspected in P.states
+
+    -- Nothing has been done yet (they just fell)
+    no P.done
+
+    -- The immediate next actions to take
+    Immobilize in NextSteps.actions
+    ProtectHeadAndSpine in NextSteps.actions
+
+    -- NextSteps.actions contains exactly the actions recommended by NextActionToDo
+    all a: Action | a in NextSteps.actions iff NextActionToDo[a]
 }
 
 

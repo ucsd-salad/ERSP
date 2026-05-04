@@ -123,7 +123,7 @@ one sig NextSteps {
     actions: set Action
 }
 
--- 🔴 NEW: wrapper predicate
+-- wrapper predicate
 pred ReferenceConstraints {
     MovementStateConsistency
     Dependencies

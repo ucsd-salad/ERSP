@@ -34,6 +34,10 @@ def call_claude(prompt, max_new_tokens=4000, temperature=0.7):
             {"role": "user", "content": prompt}
         ],
     )
+    # log AI outputs
+    with open("ai_log.txt", "a") as f:
+        f.write(message.content[0].text + "\n\n" + "="*60 + "\n\n")
+
     return message.content[0].text
 
 # extractig the generated plan from the Alloy compare file 
@@ -180,7 +184,6 @@ Modify GeneratedPlan so NO counterexample exists.
 
 RULES:
 - Output ONLY: pred GeneratedPlan {{ ... }}
-- Do NOT modify anything else
 - Only use variables, signatures, and fields already defined in the file below. Do NOT invent new names.
 
 Reference code: 
@@ -209,26 +212,26 @@ def generate_plan(user_prompt):
         full_code = f.read()
 
     prompt = f"""
-You are generating an Alloy predicate.
+You have been given a medial scenario: {user_prompt}
+Think of the advice you would give, then follow the instructions below. 
 
+You are generating an Alloy predicate.
 You MUST follow these rules strictly:
 
 RULES:
 - Output ONLY: pred GeneratedPlan "{" ... "}"
 - start with the keyword "pred GeneratedPlan" "{" followed by the body of the predicate, and end with a closing "}"
-- Only change the code to FILL IN THE BLANKS in the GeneratedPlan predicate.
-- Do NOT include any other code
+- Any sympotoms about the patient should be explicitly mentioned in the scenario 
 - Use ONLY variables, signatures, and fields already defined in the file below
 - Do NOT invent new names
-- Do NOT modify anything outside GeneratedPlan
 
 GOAL:
-Write a GeneratedPlan that satisfies the intent below AND avoids violating constraints.
+Give medical advice in the form of an Alloy predicate
 
 TASK:
 {user_prompt}
 
-FULL Alloy file (for reference only):
+FULL Alloy file (for variable name reference only):
 {full_code}
 """
 
@@ -267,7 +270,7 @@ def generate_and_verify(user_prompt, rounds=1):
 # ------------------ Main ------------------
 
 def main():
-    prompt = "Generate a safe medical treatment plan for someone who might have a spine injury. The plan should specify which medical actions to take, but must NOT include any unsafe actions that could worsen the injury."
+    prompt = "Someone fell and their back hurts and they can barely move it, what is my immediate next step"
 
     generate_and_verify(prompt)
 
