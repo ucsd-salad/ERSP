@@ -20,6 +20,7 @@ run {
 * before running again, either with same prompt or different, make sure to clear out the content inside `pred GeneratedPlan {}` to reset the compare.als file. 
 
 # Comparison 
+*testing numerous cases under the following scenario: how initial prompt let ai creates a plan that is safe or not, how many iterations of repair loop can this initial plan become safe or not, better be a graph *
 7) Run the exact same prompt on Claude website or ChatGPT, and see if it outputs a safe plan 
 8) Compare the results and the plans generated, with and without our pipeline. 
 9) Create a new file in the reuslts folder (where this tutorial is) and give it the same name as your branch. 
