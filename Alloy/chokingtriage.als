@@ -112,6 +112,6 @@ pred GeneratedPlan {
 
 run {
     GeneratedPlan
-    and not in ReferenceConstraints
+    and not ReferenceConstraints
 } for 10 Action, 10 Dependency, 1 PatientStatus
 }
