@@ -271,7 +271,7 @@ def generate_and_verify(user_prompt, rounds=1):
 
 def main():
     #insert prompt below: (e.g. "someone just fell and their spine hurts, what do i do?")
-    prompt = ""
+    prompt = "A baby is choking and cannot breathe properly and they are still awake, what do i do?"
 
     generate_and_verify(prompt)
 
