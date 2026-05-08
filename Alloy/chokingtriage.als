@@ -1,4 +1,4 @@
-// Basic types representing person condition and age category
+module checking 
 
 abstract sig Person {}
 one sig Infant, NonInfant extends Person {}
