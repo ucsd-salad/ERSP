@@ -31,7 +31,7 @@ sig Incident {
     actions: set Action
 }
 
-fact ChokingControlFlow {
+pred ReferenceConstraints {
 
     all i: Incident | {
 
@@ -45,7 +45,7 @@ fact ChokingControlFlow {
          *   - Encourage coughing only
          *************************************************/
         (i.airway = Partial and i.ability = CanCoughOrTalk) implies
-            i.actions = EncourageCoughing
+            i.actions = {EncourageCoughing}
 
 
         /*************************************************
