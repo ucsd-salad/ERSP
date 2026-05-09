@@ -55,23 +55,6 @@ But looking more carefully at the current plan — the state has `backBlowsDone 
 
 The real fix is to make `GeneratedPlan` enforce `ReferenceConstraints` so that no counterexample to `GeneratedPlan and not ReferenceConstraints` exists:
 
-```
-pred GeneratedPlan {
-    ReferenceConstraints
-    some s: State |
-        s.person = Infant
-        and s.airway = Complete
-        and s.consciousness = Unconscious
-        and s.ability = CannotCoughOrTalk
-        and s.emergencyCalled = True
-        and s.cprDone = True
-        and s.encourageCoughingDone = False
-        and s.backBlowsDone = False
-        and s.chestThrustsDone = False
-        and s.abdominalThrustsDone = False
-}
-```
-
 ============================================================
 ```
 ### Chat-GPT Output
