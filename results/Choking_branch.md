@@ -26,6 +26,7 @@ pred GeneratedPlan {
 + Knows that they're unconcious and that their airway is completely blocked, meaning they cannot cough or talk
 + Knows that this means that CPR and emergency needs to be called
 + Since emergency needs to be called and CPR is needed, other actions are set to False
++ Accurately sets thursts to false for a child
 
 Claude Thought Process:
 ```
@@ -57,4 +58,83 @@ The real fix is to make `GeneratedPlan` enforce `ReferenceConstraints` so that n
 
 ============================================================
 ```
+
+### Note About Syntax Error
+My alloy code sometimes creates a syntax error where a curly brace in the Generated Plan predicate is removed sometimes. This however is always fixed through the syntax verification and repair process which shows that its working as intended. 
+```
+== Pipeline round 1 ==
+
+[Syntax Attempt 1]
+Syntax error in /Users/jonathanmendoza/Results_ERSP/ERSP/Alloy_Verifier/compare.als at line 173 column 1:
+There are 31 possible tokens that can appear here:
+! # ( * @ Int NAME NUMBER STRING String ^ all disj fun iden int let lone no none one pred seq set some sum this univ { } ~ 
+
+
+[Syntax Attempt 2]
+Consistent: Run run$1 for 10 State, 10 Action, 10 Dependency, 1 PatientStatus
+
+
+[Logic Attempt 1]
+Consistent: Run run$1 for 10 State, 10 Action, 10 Dependency, 1 PatientStatus
+
+
+[Logic Attempt 2]
+Inconsistent error in /Users/jonathanmendoza/Results_ERSP/ERSP/Alloy_Verifier/compare.als at line 172 column 1:
+No instance of Run run$1 for 10 State, 10 Action, 10 Dependency, 1 PatientStatus found.
+
+SAFE: No violating instance exists.
+SAFE PLAN VERIFIED
+```
+
 ### Chat-GPT Output
+
+## Prompt #2
+
+Prompt: "Someone near me is choking and is currently conscious, what do i do?"
+
+## Pipeline Output
+```
+pred GeneratedPlan {
+    ReferenceConstraints
+
+    some s: State |
+        s.consciousness = Conscious
+        and s.person = NonInfant
+        and s.airway = Complete
+        and s.ability = CannotCoughOrTalk
+        and s.backBlowsDone = True
+        and s.abdominalThrustsDone = True
+        and s.emergencyCalled = True
+        and s.encourageCoughingDone = False
+        and s.chestThrustsDone = False
+        and s.cprDone = False
+}
+```
++ The pipeline says that this isn't an infant when not specified and knows that they're concious
++  gf
+
+Claude Thought Process:
+```
+============================================================
+
+Looking at this problem, I need to find why `GeneratedPlan and not ReferenceConstraints` can be satisfied (i.e., a counterexample exists).
+
+The `GeneratedPlan` specifies a state with the right action flags, but `ReferenceConstraints` includes `Dependencies` which requires certain `Dependency` atoms to exist. The issue is that `not ReferenceConstraints` can be satisfied by violating the `Dependencies` predicate (or any other state's constraints), even when the specific state in `GeneratedPlan` is correct.
+
+The key insight: `ReferenceConstraints` uses `all s: State`, meaning ALL states must satisfy the constraints. If there are other states in the model that violate the constraints, `ReferenceConstraints` fails. Also, `Dependencies` must hold.
+
+To fix this, `GeneratedPlan` must ensure that:
+1. **All states** satisfy the reference constraints (not just the one we care about).
+2. The `Dependencies` predicate holds.
+3. Every state in the model satisfies the case implications.
+
+So `GeneratedPlan` should essentially enforce `ReferenceConstraints` alongside the specific plan, or constrain all states to comply. The simplest correct approach is to include `ReferenceConstraints` within `GeneratedPlan` and ensure the specific state exists.
+```
+
+============================================================
+
+### Chat-GPT Ouput
+
+
+## Prompt #3
+
