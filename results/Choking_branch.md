@@ -87,6 +87,38 @@ SAFE PLAN VERIFIED
 ```
 
 ### Chat-GPT Output
+```
+If the person can still cough or speak, encourage them to keep coughing. Do not hit their back yet if they are coughing effectively.
+
+If they cannot speak, cry, or breathe, or they’re making silent choking motions:
+
+Call 911 immediately or tell someone nearby to call.
+Stand slightly behind them.
+Give 5 firm back blows between the shoulder blades with the heel of your hand.
+If the object doesn’t come out, give 5 abdominal thrusts (Heimlich maneuver):
+Stand behind them.
+Put a fist just above the belly button.
+Grasp the fist with your other hand.
+Pull inward and upward sharply.
+Alternate 5 back blows and 5 thrusts until:
+the object comes out,
+they can breathe again,
+or they become unconscious.
+
+If they become unconscious:
+
+Lower them carefully to the ground.
+Start CPR if you know how.
+Have someone use an AED if available.
+
+For a pregnant person or someone very large, use chest thrusts instead of abdominal thrusts.
+
+Here’s the core sequence visually:
+
+Back blows → abdominal thrusts → repeat.
+
+5 back blows →5 abdominal thrusts →repeat
+```
 
 ## Prompt #2
 
