@@ -155,9 +155,9 @@ pred ReferenceConstraints {
 }
 
 pred GeneratedPlan {
-
+    
 }
 
 run {
     GeneratedPlan and not ReferenceConstraints
-} for 10 Action, 10 Dependency, 1 PatientStatus
+} for 10 State, 10 Action, 10 Dependency, 1 PatientStatus
