@@ -28,5 +28,5 @@ run {
 
 # Formalization
 The formalization tool can only translate Alloy to controlled English, but it is still easier to understand. 
-* python formalization/pipeline_formalization.py --als Alloy_Verifier/compare.als 
+* python3 formalization/pipeline_formalization.py --als Alloy_Verifier/compare.als 
 * You can also create another .als file in the folder if you only want to see the generated plan
